@@ -13,13 +13,12 @@ import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
 import { threeToCannon } from './utils/three-to-cannon';
 import CannonDebugger from 'cannon-es-debugger'
 import * as _ from 'lodash';
-
+// "three": "0.113.0",
 onMounted (()=>{
 
     // 场景初始化
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x88ccee);
-    // scene.fog = new THREE.Fog(0x88ccee, 0, 50);
     // 创建相机
     const camera = new THREE.PerspectiveCamera(80, window.innerWidth / window.innerHeight, 0.1, 1010);
     camera.position.set(0, 350, 120)
@@ -52,10 +51,9 @@ onMounted (()=>{
     // 创建物理世界
     const world = new CANNON.World();
     world.gravity.set(0, -8.5, 0);
-
+    const GROUP1 = 1;
+    const GROUP2 = 2;
     const cannonDebugger = new CannonDebugger(scene, world, {})
-
- 
     let robotModel = null
     const gltfLoader = new GLTFLoader();
     const dracoLoader = new DRACOLoader();
@@ -89,7 +87,9 @@ onMounted (()=>{
                       phys.quaternion.copy(cannonQuat(child.quaternion));
                       phys.aabb;
                       phys.shapes.forEach((shape) => {
-                        shape.collisionFilterMask = ~4;
+                        // shape.collisionFilterMask = ~4;
+                        shape.collisionFilterGroup = GROUP1,
+                        shape.collisionFilterMask = GROUP2
                       });
 
                       world.addBody(phys);
@@ -139,7 +139,9 @@ onMounted (()=>{
         mass: 0,
         position: new THREE.Vector3(),
         size: new THREE.Vector3(0.3, 0.3, 0.3),
-        friction: 0.3
+        friction: 0.3,
+        collisionFilterGroup: GROUP1,
+        collisionFilterMask: GROUP2
       };
       options = setDefaults(options, defaults);
 
@@ -152,7 +154,6 @@ onMounted (()=>{
 
       let shape = new CANNON.Box(options.size);
       // shape.material = mat;
-
       // Add phys sphere
       let physBox = new CANNON.Body({
         mass: options.mass,
@@ -173,7 +174,9 @@ onMounted (()=>{
         mass: 0,
         position: mesh.position,
         rotation: mesh.quaternion,
-        friction: 0.3
+        friction: 0.3,
+        collisionFilterGroup: GROUP1,
+        collisionFilterMask: GROUP2
       };
       options = setDefaults(options, defaults);
 
@@ -205,7 +208,7 @@ onMounted (()=>{
          return _.defaults({}, _.clone(options), defaults);
     }
     // 创建物理小球形状
-    const sphereShape = new CANNON.Sphere(0.5);
+    const sphereShape = new CANNON.Sphere(1);
     // 设置物体材质
     // const sphereWorldMaterial = new CANNON.Material();
     // 创建物理世界的物体
@@ -216,38 +219,28 @@ onMounted (()=>{
         // 小球质量
         mass: 1,
         // 物体材质
-        // material: sphereWorldMaterial,
+        collisionFilterGroup: GROUP2,
+        collisionFilterMask:  GROUP1
     });
     sphereBody.position.y = 150
     // 将物体添加至物理世界
     world.addBody(sphereBody);
-    // 创建地面
-    const floorShape = new CANNON.Plane();
-    const floorBody = new CANNON.Body();
-    // 当质量为0时，使得物体保持不动
-    floorBody.mass = 0;
+    // // 创建地面
+    // const floorShape = new CANNON.Plane();
+    // const floorBody = new CANNON.Body();
+    // // 当质量为0时，使得物体保持不动
+    // floorBody.mass = 0;
   
-    // 位置
-    if(robotModel){
-      floorBody.position.set(robotModel.position);
-    }
-    floorBody.addShape(floorShape);
-    // floorBody.position.x = -Math.PI / 2;
-    // 旋转
-    floorBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -Math.PI / 2);
-    world.addBody(floorBody);
-    // 创建一个平面
-    // const planeGeometry = new THREE.PlaneGeometry(20, 20, 1, 1);
-    // const planMaterial = new THREE.MeshBasicMaterial({
-    //   color: 0xffffff,
-    //   side: THREE.DoubleSide
-    // });
-    // const plane = new THREE.Mesh(planeGeometry, planMaterial);
-    // plane.receiveShadow = true;
-    // plane.rotation.x = -Math.PI / 2;
-    // plane.position.set(0, 0, 0);
-    // plane.position.copy(floorBody.position)
-    // scene.add(plane)
+    // // 位置
+    // if(robotModel){
+    //   floorBody.position.set(robotModel.position);
+    // }
+    // floorBody.addShape(floorShape);
+    // // floorBody.position.x = -Math.PI / 2;
+    // // 旋转
+    // floorBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -Math.PI / 2);
+    // world.addBody(floorBody);
+
 
     const pointLight1 = new THREE.PointLight(0xffffff,1.0);
     const pointLight2 = new THREE.PointLight(0xffffff,1.0);
@@ -261,7 +254,7 @@ onMounted (()=>{
     // scene.add( pointLightHelper );
     
     // 创建胶囊几何体
-    const geometry = new THREE.SphereGeometry( 15, 32, 16 );
+    const geometry = new THREE.SphereGeometry( 1, 32, 16 );
     const material = new THREE.MeshBasicMaterial({
       color: 0xff0000,
       side: THREE.DoubleSide
@@ -278,7 +271,7 @@ onMounted (()=>{
         // const result = threeToCannon(robotModel);
         // console.log('robotModel', result)
         // robotModel.position.copy(sphereBody.position)
-        floorBody.position.set(robotModel.position);
+        // floorBody.position.set(robotModel.position);
         sphere.position.copy(sphereBody.position)
         sphere.quaternion.copy(sphereBody.quaternion)
       }

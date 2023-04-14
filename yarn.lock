@@ -464,10 +464,10 @@ three-to-cannon@^4.3.0:
   dependencies:
     "@types/three" ">=0.142.0"
 
-three@0.113.0:
-  version "0.113.0"
-  resolved "https://registry.npmjs.org/three/-/three-0.113.0.tgz#b5f82500a34eaca43fe3305e163eefe38b4c3221"
-  integrity sha512-H1IuGiyyBciP+L8fM5WCgXSm/nYbLr+tGgY9WWu7PPBxDxki/XJovC/Hz5JI/V7d6kx+1R/8zXWEmsIotLH/aA==
+three@^0.151.3:
+  version "0.151.3"
+  resolved "https://registry.npmjs.org/three/-/three-0.151.3.tgz#0b3c7de4b070d5b66b15217f42465d67cbfa6004"
+  integrity sha512-+vbuqxFy8kzLeO5MgpBHUvP/EAiecaDwDuOPPDe6SbrZr96kccF0ktLngXc7xA7bzyd3N0t2f6mw3Z9y6JCojQ==
 
 vite@^4.2.0:
   version "4.2.1"
