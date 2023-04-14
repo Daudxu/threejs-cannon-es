@@ -47,18 +47,6 @@ onMounted (()=>{
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.target.set(0, 0, 0);
 
-
-    // 创建一个平面
-    const planeGeometry = new THREE.BoxGeometry(10, 0.2 ,10);
-    const planMaterial = new THREE.MeshBasicMaterial({
-      color: 0xffffff,
-      side: THREE.DoubleSide
-    });
-    const plane = new THREE.Mesh(planeGeometry, planMaterial);
-    plane.receiveShadow = true;
-    // plane.rotation.x = 0.1;
-    scene.add(plane)
-
     // 创建物理世界
     const world = new CANNON.World();
     // 设置物理世界休眠
@@ -76,8 +64,8 @@ onMounted (()=>{
     // 创建地面
     // const planeShape = new CANNON.Box(new CANNON.Vec3(5, 0.1, 5));
     const planeShapeMaterial = new CANNON.Material("boxSlipperyMaterial");
-    planeShapeMaterial.friction = 0;
-    planeShapeMaterial.restitution =  1;
+    planeShapeMaterial.friction = 1;
+    // planeShapeMaterial.restitution =  0;
 
     // const planeBody = new CANNON.Body({
     //   shape: planeShape,
@@ -97,7 +85,7 @@ onMounted (()=>{
     boxMateralCon.restitution = 0.14
     const capsuleBody = new CANNON.Body({
       mass: 1,
-      position: new CANNON.Vec3(0, 3, 0),
+      position: new CANNON.Vec3(0, 1, 0),
       material: boxMateralCon,
       collisionFilterGroup: GROUP2,
       collisionFilterMask: GROUP1
@@ -110,8 +98,7 @@ onMounted (()=>{
   capsuleBody.addShape(cylinderShape, new CANNON.Vec3(0, 0, 0))
   capsuleBody.addShape(sphereShape, new CANNON.Vec3(0, -0.75, 0))
   // 添加到物理世界
-  world.addBody(capsuleBody);
-  phyMeshes.push(capsuleBody)
+
 
   const geometry1 = new THREE.SphereGeometry( 0.5, 32, 32 );
   const material1 = new THREE.MeshBasicMaterial( { color: 0xffff00 } );
@@ -131,7 +118,7 @@ onMounted (()=>{
   meshbody.add(sphere2)
   meshbody.add(cylinder)
   scene.add( meshbody );
-  meshes.push( meshbody );
+  // meshes.push( meshbody );
     // 设置boxbody移动速度
     // boxBody.velocity.set(2, 0, 0)
 
@@ -141,68 +128,51 @@ onMounted (()=>{
     dracoLoader.setDecoderConfig({ type: "js" });
     dracoLoader.preload();
     gltfLoader.setDRACOLoader(dracoLoader);
-    gltfLoader.load('./models/12.glb', gltf => {
+    gltfLoader.load('./models/metaScene03.glb',  (gltf) => {
        let  robt = gltf.scene
-       gltf.scene.traverse((child) => {
-        if(child.name === "立方体"){
-          child.material = new THREE.MeshBasicMaterial({color: 0xffffff})
-        }else{
-          child.material = new THREE.MeshBasicMaterial({color: 0x00ffff})
-        }
-        let shape = threeToCannon(child, {type: ShapeType.MESH});
-        // shape.aabb;
-        console.log(shape)
-        // console.log(child)
-        // console.log('child.geometry.attributes', child.geometry.BufferGeometry)
-        // console.log('child.geometry.attributes', child.geometry.attributes)
-    
-        // let trimeshShape = new CANNON.Trimesh(
-        //   child.geometry.attributes.position.array,
-        //   child.geometry.index.array
-        // )
-        let trimeshBody = new CANNON.Body({
-          mass: 0,
-          shape: shape.shape,
-          material: boxMateralCon,
-          // position: child.position,
-          position: child.position,
-          rotation: child.rotation,
-          collisionFilterGroup: GROUP1,
-          collisionFilterMask:  GROUP2
-       })
-       world.addBody(trimeshBody)
-      //  phyMeshes.push(trimeshBody)
-    })
+       robt.position.set(10.8 , -2.2, 8.5)
+      //  console.log( gltf )
+       gltf.scene.traverse(async (child) => {
+        if(child.isMesh){
+          var attributes = await child.geometry
+          // console.log(attributes)
+          if(attributes){
+            let trimeshShape = new CANNON.Trimesh(
+              attributes.attributes.position.array,
+              attributes.index.array
+            )
+            let trimeshBody = new CANNON.Body({
+                mass: 0,
+                shape: trimeshShape,
+                material: boxMateralCon,
+                position: child.position,
+                rotation: child.rotation,
+                collisionFilterGroup: GROUP1,
+                collisionFilterMask:  GROUP2
+            })
+            world.addBody(trimeshBody)
+
+            world.addBody(capsuleBody);
+            // phyMeshes.push(capsuleBody)
+          }
        
+        }
+        // let shape = threeToCannon(child, {type: ShapeType.MESH});
   
+    })
        scene.add(robt)
-      //  meshes.push(robt)
-       // 设置truimesh
-      //  const trimeshShape = new CANNON.Trimesh(
-      //   robt.geometry.attributes.position.array,
-      //   robt.geometry.index.array
-      //  )
-      //  let trimeshBody = new CANNON.Body({
-      //     mass: 1,
-      //     shape: trimeshShape,
-      //     position: new CANNON.Vec3(2, 3, 0),
-      //     material: boxMateralCon,
-      //     collisionFilterGroup: GROUP2,
-      //     collisionFilterMask: GROUP1
-      //  })
-      //  world.addBody(trimeshBody)
-      //  phyMeshes.push(trimeshBody)
     })
     const clock = new THREE.Clock();
    
     function animate() {
       let delta = clock.getDelta();
       world.step(1 / 60, delta);
-      for(let i = 0; i< phyMeshes.length; i++) {
-        meshes[i].position.copy(phyMeshes[i].position)
-        meshes[i].quaternion.copy(phyMeshes[i].quaternion)
-      }
-
+      // for(let i = 0; i< phyMeshes.length; i++) {
+      //   meshes[i].position.copy(phyMeshes[i].position)
+      //   meshes[i].quaternion.copy(phyMeshes[i].quaternion)
+      // }
+      meshbody.position.copy(capsuleBody.position)
+      meshbody.quaternion.copy(capsuleBody.quaternion)
       stats.update();
       controls.update();
       renderer.render(scene, camera);
